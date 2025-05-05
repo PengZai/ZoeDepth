@@ -52,7 +52,7 @@ class DepthModel(nn.Module):
         Returns:
             torch.Tensor: output tensor of shape (b, 1, h, w)
         """
-        return self(x)['metric_depth']
+        return self(x)[-1]
     
     def _infer_with_pad_aug(self, x: torch.Tensor, pad_input: bool=True, fh: float=3, fw: float=3, upsampling_mode: str='bicubic', padding_mode="reflect", **kwargs) -> torch.Tensor:
         """

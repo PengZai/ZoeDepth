@@ -27,6 +27,7 @@ import random
 
 import cv2
 import numpy as np
+import torch
 
 
 class RandomFliplr(object):
@@ -200,15 +201,15 @@ class Resize(object):
         self.__letter_box = letter_box
 
     def constrain_to_multiple_of(self, x, min_val=0, max_val=None):
-        y = (np.round(x / self.__multiple_of) * self.__multiple_of).astype(int)
+        y = (torch.round(x / self.__multiple_of) * self.__multiple_of).int()
 
         if max_val is not None and y > max_val:
-            y = (np.floor(x / self.__multiple_of)
-                 * self.__multiple_of).astype(int)
+            y = (torch.floor(x / self.__multiple_of)
+                 * self.__multiple_of).int()
 
         if y < min_val:
-            y = (np.ceil(x / self.__multiple_of)
-                 * self.__multiple_of).astype(int)
+            y = (torch.ceil(x / self.__multiple_of)
+                 * self.__multiple_of).int()
 
         return y
 

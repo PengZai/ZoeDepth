@@ -26,7 +26,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torchvision.transforms import Normalize
-
+from zoedepth.models.base_models.midass.dpt_depth import DPTDepthModel
 
 def denormalize(x):
     """Reverses the imagenet normalization applied to the input.
@@ -98,20 +98,21 @@ class Resize(object):
         self.__resize_method = resize_method
 
     def constrain_to_multiple_of(self, x, min_val=0, max_val=None):
-        y = (np.round(x / self.__multiple_of) * self.__multiple_of).astype(int)
+        y = (torch.round(x / self.__multiple_of) * self.__multiple_of).int()
 
         if max_val is not None and y > max_val:
-            y = (np.floor(x / self.__multiple_of)
-                 * self.__multiple_of).astype(int)
-
+            y = (torch.floor(x / self.__multiple_of)
+                 * self.__multiple_of).int()
         if y < min_val:
-            y = (np.ceil(x / self.__multiple_of)
-                 * self.__multiple_of).astype(int)
+            y = (torch.ceil(x / self.__multiple_of)
+                 * self.__multiple_of).int()
 
         return y
 
     def get_size(self, width, height):
         # determine new height and width
+        width = torch.tensor(width)
+        height = torch.tensor(height)
         scale_height = self.__height / height
         scale_width = self.__width / width
 
@@ -166,7 +167,7 @@ class Resize(object):
             raise ValueError(
                 f"resize_method {self.__resize_method} not implemented")
 
-        return (new_width, new_height)
+        return (new_width.item(), new_height.item())
 
     def __call__(self, x):
         width, height = self.get_size(*x.shape[-2:][::-1])
@@ -338,8 +339,14 @@ class MidasCore(nn.Module):
             kwargs = MidasCore.parse_img_size(kwargs)
         img_size = kwargs.pop("img_size", [384, 384])
         print("img_size", img_size)
-        midas = torch.hub.load("intel-isl/MiDaS", midas_model_type,
-                               pretrained=use_pretrained_midas, force_reload=force_reload)
+        # midas = torch.hub.load("intel-isl/MiDaS", midas_model_type,
+        #                        pretrained=use_pretrained_midas, force_reload=force_reload)
+
+        midas = DPTDepthModel(
+                path="weights/dpt_beit_large_384.pt",
+                backbone="beitl16_384",
+                non_negative=True,
+            )
         kwargs.update({'keep_aspect_ratio': force_keep_ar})
         midas_core = MidasCore(midas, trainable=train_midas, fetch_features=fetch_features,
                                freeze_bn=freeze_bn, img_size=img_size, **kwargs)

@@ -121,7 +121,7 @@ class ZoeDepth(DepthModel):
         self.conditional_log_binomial = ConditionalLogBinomial(
             last_in, bin_embedding_dim, n_classes=n_bins, min_temp=min_temp, max_temp=max_temp)
 
-    def forward(self, x, return_final_centers=False, denorm=False, return_probs=False, **kwargs):
+    def forward(self, x, return_final_centers=True, denorm=False, return_probs=True, **kwargs):
         """
         Args:
             x (torch.Tensor): Input image tensor of shape (B, C, H, W)
@@ -192,12 +192,12 @@ class ZoeDepth(DepthModel):
         out = torch.sum(x * b_centers, dim=1, keepdim=True)
 
         # Structure output dict
-        output = dict(metric_depth=out)
+        output = [out]
         if return_final_centers or return_probs:
-            output['bin_centers'] = b_centers
+            output.append(b_centers)
 
         if return_probs:
-            output['probs'] = x
+            output.append(x)
 
         return output
 
